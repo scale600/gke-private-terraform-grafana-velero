@@ -26,17 +26,23 @@ spec:
         env:
         - name: GF_SECURITY_ADMIN_PASSWORD
           value: "GkeDemo2024!"
-        - name: GF_AUTH_ANONYMOUS_ENABLED
-          value: "false"
         - name: GF_SERVER_ROOT_URL
-          value: "https://gcp-gke.techcloudup.com"
+          value: "https://gcp-gke.techcloudup.com/grafana"
+        - name: GF_SERVER_SERVE_FROM_SUB_PATH
+          value: "true"
+        - name: GF_SECURITY_ALLOW_EMBEDDING
+          value: "true"
+        - name: GF_AUTH_ANONYMOUS_ENABLED
+          value: "true"
+        - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+          value: "Viewer"
         resources:
           requests:
-            cpu: "100m"
-            memory: "256Mi"
+            cpu: "50m"
+            memory: "128Mi"
           limits:
             cpu: "300m"
-            memory: "512Mi"
+            memory: "256Mi"
         volumeMounts:
         - name: datasources
           mountPath: /etc/grafana/provisioning/datasources
