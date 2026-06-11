@@ -21,6 +21,8 @@ jobs:
         service_account: ${{ vars.DEPLOY_SA }}
 
     - uses: google-github-actions/setup-gcloud@v2
+      with:
+        install_components: gke-gcloud-auth-plugin
 
     - name: Get GKE credentials
       run: |
