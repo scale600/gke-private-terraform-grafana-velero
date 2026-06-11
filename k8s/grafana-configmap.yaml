@@ -9,6 +9,7 @@ data:
     datasources:
     - name: Cloud Monitoring
       type: stackdriver
+      uid: cloud-monitoring-gke
       access: proxy
       isDefault: true
       jsonData:
@@ -49,12 +50,18 @@ data:
           "type": "timeseries",
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
           "targets": [{
-            "datasource": { "type": "stackdriver" },
-            "metricType": "kubernetes.io/node/cpu/allocatable_utilization",
-            "crossSeriesReducer": "REDUCE_MEAN",
-            "perSeriesAligner": "ALIGN_MEAN",
-            "alignmentPeriod": "60s",
-            "groupBys": ["resource.label.node_name"],
+            "datasource": { "type": "stackdriver", "uid": "cloud-monitoring-gke" },
+            "queryType": "metrics",
+            "metricQuery": {
+              "projectName": "gke-private-demo-202606",
+              "metricType": "kubernetes.io/node/cpu/allocatable_utilization",
+              "crossSeriesReducer": "REDUCE_MEAN",
+              "perSeriesAligner": "ALIGN_MEAN",
+              "alignmentPeriod": "60s",
+              "groupBys": ["resource.label.node_name"],
+              "filters": [],
+              "aliasBy": ""
+            },
             "refId": "A"
           }],
           "fieldConfig": {
@@ -71,12 +78,18 @@ data:
           "type": "timeseries",
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
           "targets": [{
-            "datasource": { "type": "stackdriver" },
-            "metricType": "kubernetes.io/node/memory/allocatable_utilization",
-            "crossSeriesReducer": "REDUCE_MEAN",
-            "perSeriesAligner": "ALIGN_MEAN",
-            "alignmentPeriod": "60s",
-            "groupBys": ["resource.label.node_name"],
+            "datasource": { "type": "stackdriver", "uid": "cloud-monitoring-gke" },
+            "queryType": "metrics",
+            "metricQuery": {
+              "projectName": "gke-private-demo-202606",
+              "metricType": "kubernetes.io/node/memory/allocatable_utilization",
+              "crossSeriesReducer": "REDUCE_MEAN",
+              "perSeriesAligner": "ALIGN_MEAN",
+              "alignmentPeriod": "60s",
+              "groupBys": ["resource.label.node_name"],
+              "filters": [],
+              "aliasBy": ""
+            },
             "refId": "A"
           }],
           "fieldConfig": {
@@ -93,11 +106,17 @@ data:
           "type": "stat",
           "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 },
           "targets": [{
-            "datasource": { "type": "stackdriver" },
-            "metricType": "kubernetes.io/container/restart_count",
-            "crossSeriesReducer": "REDUCE_SUM",
-            "perSeriesAligner": "ALIGN_DELTA",
-            "alignmentPeriod": "3600s",
+            "datasource": { "type": "stackdriver", "uid": "cloud-monitoring-gke" },
+            "queryType": "metrics",
+            "metricQuery": {
+              "projectName": "gke-private-demo-202606",
+              "metricType": "kubernetes.io/container/restart_count",
+              "crossSeriesReducer": "REDUCE_SUM",
+              "perSeriesAligner": "ALIGN_DELTA",
+              "alignmentPeriod": "3600s",
+              "filters": [],
+              "aliasBy": ""
+            },
             "refId": "A"
           }],
           "fieldConfig": {
@@ -116,16 +135,31 @@ data:
           "type": "stat",
           "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 },
           "targets": [{
-            "datasource": { "type": "stackdriver" },
-            "metricType": "kubernetes.io/pod/volume/total_bytes",
-            "crossSeriesReducer": "REDUCE_COUNT",
-            "perSeriesAligner": "ALIGN_MEAN",
-            "alignmentPeriod": "60s",
+            "datasource": { "type": "stackdriver", "uid": "cloud-monitoring-gke" },
+            "queryType": "metrics",
+            "metricQuery": {
+              "projectName": "gke-private-demo-202606",
+              "metricType": "kubernetes.io/container/uptime",
+              "crossSeriesReducer": "REDUCE_COUNT",
+              "perSeriesAligner": "ALIGN_MEAN",
+              "alignmentPeriod": "60s",
+              "filters": [],
+              "aliasBy": ""
+            },
             "refId": "A"
           }],
           "fieldConfig": {
             "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "blue" } }
           }
+        }
+      ],
+      "__inputs": [
+        {
+          "name": "DS_CLOUD_MONITORING",
+          "label": "Cloud Monitoring",
+          "type": "datasource",
+          "pluginId": "stackdriver",
+          "pluginName": "Google Cloud Monitoring"
         }
       ]
     }
