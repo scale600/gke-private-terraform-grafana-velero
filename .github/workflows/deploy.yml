@@ -1,0 +1,36 @@
+name: Deploy to GKE
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Authenticate to GCP (Workload Identity Federation)
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+        service_account: ${{ vars.DEPLOY_SA }}
+
+    - uses: google-github-actions/setup-gcloud@v2
+
+    - name: Get GKE credentials
+      run: |
+        gcloud container clusters get-credentials ${{ vars.GKE_CLUSTER }} \
+          --zone ${{ vars.GKE_ZONE }} \
+          --project ${{ vars.PROJECT_ID }}
+
+    - name: Deploy
+      run: |
+        kubectl apply -f k8s/deployment.yaml
+        kubectl apply -f k8s/service.yaml
+        kubectl apply -f k8s/network-policy.yaml
+        kubectl rollout status deployment/hello-gke --timeout=120s
