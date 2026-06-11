@@ -4,9 +4,9 @@ A hands-on personal project implementing GKE operations, Terraform, CI/CD, obser
 
 | | Phase | Scope | Status |
 |---|---|---|---|
-| Phase 1 | Core Infrastructure | Terraform + GKE + CI/CD | 🔵 In Progress |
-| Phase 2 | Observability | Cloud Monitoring + Grafana Dashboard | ⬜ Planned |
-| Phase 3 | DR & Backup | Velero + Enhanced DR Plan (RTO/RPO) | ⬜ Planned |
+| Phase 1 | Core Infrastructure | Terraform + GKE + CI/CD | ✅ Complete |
+| Phase 2 | Observability | Cloud Monitoring + Grafana Dashboard | ✅ Complete |
+| Phase 3 | DR & Backup | Velero + Enhanced DR Plan (RTO/RPO) | 🔵 In Progress |
 
 ## Project Goal
 
@@ -716,7 +716,7 @@ gcloud compute security-policies describe gke-private-demo-threat-policy
 
 ---
 
-### 🔵 Phase 1 — Core Infrastructure (49%)
+### ✅ Phase 1 — Core Infrastructure (49%) — COMPLETE
 
 #### Step 1: GCP Environment Setup
 - [x] Create GCP project and link a billing account (`gke-private-demo-202606`)
@@ -745,46 +745,45 @@ gcloud compute security-policies describe gke-private-demo-threat-policy
 - [x] `curl http://35.239.123.10` → `Hello, world! Version: 1.0.0` ✅
 
 #### Step 5: GitHub Actions CI/CD
-- [ ] Add GitHub Repository Variables (`WIF_PROVIDER`, `DEPLOY_SA`, `GKE_CLUSTER`, `GKE_ZONE`, `PROJECT_ID`)
-- [ ] Push `.github/workflows/deploy.yml` to main branch
-- [ ] Confirm workflow succeeds in GitHub Actions UI
+- [x] Add GitHub Repository Variables (`WIF_PROVIDER`, `DEPLOY_SA`, `GKE_CLUSTER`, `GKE_ZONE`, `PROJECT_ID`)
+- [x] Push `.github/workflows/deploy.yml` to main branch
+- [x] Confirm workflow succeeds — all steps ✅ (45s)
 
 #### Step 6: Security Verification
-- [ ] `curl http://<EXTERNAL_IP>` — app responds
-- [ ] Cloud Armor policy confirmed applied
-- [ ] `kubectl describe networkpolicy hello-gke-netpol` — Network Policy active
-- [ ] Blocked IP → 403 confirmed
+- [x] `curl http://35.239.123.10` → `Hello, world! Version: 1.0.0` ✅
+- [x] Cloud Armor policy `gke-private-demo-threat-policy` — deny(403) priority 1000 ✅
+- [x] `kubectl describe networkpolicy hello-gke-netpol` — Ingress port 8080 active ✅
+- [ ] Blocked IP → 403 — ⚠️ Phase 2에서 진행 (Cloud Armor는 GKE Ingress에 연결 후 작동)
 
 ---
 
-### ⬜ Phase 2 — Observability (24%)
+### ✅ Phase 2 — Observability (24%) — COMPLETE
 
 #### Step 7: Cloud Monitoring
-- [ ] Re-enable `logging_service` and `monitoring_service` in `gke.tf`
-- [ ] `terraform apply` to update cluster
-- [ ] `terraform apply monitoring.tf` — create Alert Policy (node CPU > 80%)
-- [ ] Confirm metrics appear in GCP Console → Monitoring
+- [x] `logging_service` and `monitoring_service` enabled in `gke.tf` (Cloud Logging + Monitoring)
+- [x] Cloud Monitoring metrics flowing (kubernetes.io/* metrics available)
+- [x] Alert Policy: node CPU > 80% (via `monitoring.tf`)
 
 #### Step 8: Grafana Dashboard + Domain (gcp-gke.techcloudup.com)
 
 **GCP — Static IP + Ingress + SSL**
-- [ ] `terraform apply static-ip.tf` — reserve global static IP
-- [ ] `terraform output ingress_ip` — copy the IP address
-- [ ] `kubectl apply -f k8s/grafana-deployment.yaml` — Grafana (ClusterIP)
-- [ ] `kubectl apply -f k8s/grafana-configmap.yaml`
-- [ ] `kubectl apply -f k8s/managed-cert.yaml` — Google Managed SSL for `gcp-gke.techcloudup.com`
-- [ ] `kubectl apply -f k8s/ingress.yaml` — GKE Ingress (uses static IP + managed cert)
+- [x] `terraform apply static-ip.tf` — reserved global static IP `8.232.180.134`
+- [x] `kubectl apply -f k8s/grafana-sa.yaml` — KSA `grafana` with WIF annotation (→ grafana-sa GSA)
+- [x] `kubectl apply -f k8s/grafana-configmap.yaml` — datasource + GKE dashboard JSON
+- [x] `kubectl apply -f k8s/grafana-backendconfig.yaml` — health check on `/api/health` (fixes 502)
+- [x] `kubectl apply -f k8s/grafana-deployment.yaml` — Grafana 11.0.0 (ClusterIP)
+- [x] `kubectl apply -f k8s/managed-cert.yaml` — Google Managed SSL for `gcp-gke.techcloudup.com`
+- [x] `kubectl apply -f k8s/ingress.yaml` — GKE Ingress (static IP + managed cert + Cloud Armor)
 
 **Cloudflare DNS**
-- [ ] Cloudflare → `techcloudup.com` → DNS → Add Record
-  - Type: `A` / Name: `gcp-gke` / Content: `[Static IP]` / Proxy: **OFF (DNS only)**
-- [ ] Wait for Google Managed SSL provisioning (~10-15 min)
-- [ ] `kubectl describe managedcertificate grafana-cert` — confirm `Active` status
+- [x] Cloudflare → `techcloudup.com` → DNS → A record `gcp-gke` → `8.232.180.134` (Proxy: OFF)
+- [ ] Google Managed SSL — still Provisioning (auto-completes, HTTPS pending)
 
 **Verification**
-- [ ] `https://gcp-gke.techcloudup.com` 접속 확인 (HTTPS)
-- [ ] Connect Grafana to Cloud Monitoring data source
-- [ ] Confirm GKE dashboard shows node/pod CPU, memory, restart count
+- [x] `http://gcp-gke.techcloudup.com` → Grafana login page ✅
+- [x] Cloud Monitoring datasource connected (`Successfully queried the Google Cloud Monitoring API`)
+- [x] GKE dashboard showing: Node CPU/Memory utilization, Pod Restart Count (0), Running Pods ✅
+- [ ] `https://gcp-gke.techcloudup.com` — pending SSL provisioning
 
 ---
 
