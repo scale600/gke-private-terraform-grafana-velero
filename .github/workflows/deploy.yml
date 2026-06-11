@@ -41,6 +41,7 @@ jobs:
       run: |
         kubectl apply -f k8s/grafana-sa.yaml
         kubectl apply -f k8s/grafana-configmap.yaml
+        kubectl apply -f k8s/grafana-backendconfig.yaml
         kubectl apply -f k8s/grafana-deployment.yaml
         kubectl apply -f k8s/managed-cert.yaml
         kubectl apply -f k8s/ingress.yaml

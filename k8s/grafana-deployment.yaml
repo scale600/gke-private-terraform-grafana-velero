@@ -66,6 +66,8 @@ kind: Service
 metadata:
   name: grafana
   namespace: default
+  annotations:
+    cloud.google.com/backend-config: '{"default": "grafana-backendconfig"}'
 spec:
   type: ClusterIP
   selector:
