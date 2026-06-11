@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: default
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+    - name: Cloud Monitoring
+      type: stackdriver
+      access: proxy
+      isDefault: true
+      jsonData:
+        authenticationType: gce
+        defaultProject: gke-private-demo-202606
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-provider
+  namespace: default
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+    - name: GKE
+      folder: GKE
+      type: file
+      options:
+        path: /var/lib/grafana/dashboards
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-gke
+  namespace: default
+data:
+  gke-overview.json: |
+    {
+      "title": "GKE Private Demo",
+      "uid": "gke-overview",
+      "schemaVersion": 38,
+      "refresh": "30s",
+      "panels": [
+        {
+          "id": 1,
+          "title": "Node CPU Utilization",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "targets": [{
+            "datasource": { "type": "stackdriver" },
+            "metricType": "kubernetes.io/node/cpu/allocatable_utilization",
+            "crossSeriesReducer": "REDUCE_MEAN",
+            "perSeriesAligner": "ALIGN_MEAN",
+            "alignmentPeriod": "60s",
+            "groupBys": ["resource.label.node_name"],
+            "refId": "A"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "max": 1,
+              "color": { "mode": "palette-classic" }
+            }
+          }
+        },
+        {
+          "id": 2,
+          "title": "Node Memory Utilization",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "targets": [{
+            "datasource": { "type": "stackdriver" },
+            "metricType": "kubernetes.io/node/memory/allocatable_utilization",
+            "crossSeriesReducer": "REDUCE_MEAN",
+            "perSeriesAligner": "ALIGN_MEAN",
+            "alignmentPeriod": "60s",
+            "groupBys": ["resource.label.node_name"],
+            "refId": "A"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "max": 1,
+              "color": { "mode": "palette-classic" }
+            }
+          }
+        },
+        {
+          "id": 3,
+          "title": "Pod Restart Count",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 },
+          "targets": [{
+            "datasource": { "type": "stackdriver" },
+            "metricType": "kubernetes.io/container/restart_count",
+            "crossSeriesReducer": "REDUCE_SUM",
+            "perSeriesAligner": "ALIGN_DELTA",
+            "alignmentPeriod": "3600s",
+            "refId": "A"
+          }],
+          "fieldConfig": {
+            "defaults": { "unit": "short", "color": { "mode": "thresholds" },
+              "thresholds": { "steps": [
+                { "color": "green", "value": null },
+                { "color": "yellow", "value": 1 },
+                { "color": "red", "value": 5 }
+              ]}
+            }
+          }
+        },
+        {
+          "id": 4,
+          "title": "Running Pods",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 },
+          "targets": [{
+            "datasource": { "type": "stackdriver" },
+            "metricType": "kubernetes.io/pod/volume/total_bytes",
+            "crossSeriesReducer": "REDUCE_COUNT",
+            "perSeriesAligner": "ALIGN_MEAN",
+            "alignmentPeriod": "60s",
+            "refId": "A"
+          }],
+          "fieldConfig": {
+            "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "blue" } }
+          }
+        }
+      ]
+    }

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grafana
+  namespace: default
+  annotations:
+    iam.gke.io/gcp-service-account: gke-private-demo-grafana-sa@gke-private-demo-202606.iam.gserviceaccount.com

@@ -1,0 +1,8 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: grafana-cert
+  namespace: default
+spec:
+  domains:
+  - gcp-gke.techcloudup.com
