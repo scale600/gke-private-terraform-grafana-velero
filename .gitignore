@@ -5,3 +5,5 @@ terraform.tfvars
 .env
 *.tfstate
 *.tfstate.backup
+
+gcp-gke-project-kor.md
