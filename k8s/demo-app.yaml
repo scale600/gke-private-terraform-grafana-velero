@@ -10,7 +10,7 @@ data:
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>GKE Private Cluster — Cloud Engineering Project</title>
+      <title>GCP GKE Cluster — Cloud Engineering Project</title>
       <script src="https://cdn.tailwindcss.com"></script>
       <style>
         body { background: #0f1117; color: #e2e8f0; }
@@ -33,7 +33,7 @@ data:
         <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#4ade80,#60a5fa)">
           <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
         </div>
-        <span class="font-bold text-white text-sm">GKE Private Cluster</span>
+        <span class="font-bold text-white text-sm">GCP GKE Cluster</span>
       </div>
       <div class="flex items-center gap-6">
         <div class="flex items-center gap-3 pl-4 border-l border-gray-700">
@@ -54,7 +54,7 @@ data:
       <div class="text-center mb-20">
         <div class="flex justify-center gap-2 mb-6 flex-wrap">
           <span class="badge" style="background:#1a3a2a;color:#4ade80">Terraform IaC</span>
-          <span class="badge" style="background:#1a2a3a;color:#60a5fa">GKE Private Cluster</span>
+          <span class="badge" style="background:#1a2a3a;color:#60a5fa">GCP GKE Cluster</span>
           <span class="badge" style="background:#2a1a3a;color:#a78bfa">CI/CD + WIF</span>
           <span class="badge" style="background:#3a2a1a;color:#fb923c">Grafana Observability</span>
           <span class="badge" style="background:#1a2a2a;color:#2dd4bf">Velero DR</span>
@@ -90,7 +90,7 @@ data:
             <h3 class="font-bold text-white mb-3">Core Infrastructure</h3>
             <div>
               <div class="phase-item"><span class="check">+</span> VPC + Cloud NAT + Firewall</div>
-              <div class="phase-item"><span class="check">+</span> GKE Private Cluster (Spot e2-small)</div>
+              <div class="phase-item"><span class="check">+</span> GCP GKE Cluster (Spot e2-small)</div>
               <div class="phase-item"><span class="check">+</span> Terraform IaC (25 resources)</div>
               <div class="phase-item"><span class="check">+</span> Cloud Armor threat policy</div>
               <div class="phase-item"><span class="check">+</span> GitHub Actions + WIF (no SA keys)</div>
@@ -179,7 +179,7 @@ data:
             '[GitHub Actions] -- push to main',
             '        |  WIF (no long-lived SA keys)',
             '        v',
-            '[GKE Private Cluster  us-central1-f]',
+            '[GCP GKE Cluster  us-central1-f]',
             '        |',
             '        +-- VPC (10.0.0.0/24)',
             '              +-- Private Nodes (Spot e2-small, autoscale 1->2)',
@@ -196,7 +196,7 @@ data:
             <div class="text-blue-400 text-xs font-bold mb-2 uppercase tracking-wider">Infrastructure</div>
             <div class="space-y-2 text-sm text-gray-300">
               <div>Terraform ~&gt;5.0 (IaC)</div>
-              <div>GKE Private Cluster (Zonal)</div>
+              <div>GCP GKE Cluster (Zonal)</div>
               <div>VPC-native networking</div>
               <div>Cloud NAT, Cloud Armor</div>
             </div>
@@ -232,7 +232,7 @@ data:
       </div>
     </div>
     <footer class="border-t border-gray-800 mt-16 px-8 py-6 text-center text-gray-600 text-sm">
-      GKE Private Cluster Project &middot; us-central1-f &middot; Spot e2-small &middot; All 3 phases complete
+      GCP GKE Cluster Project &middot; us-central1-f &middot; Spot e2-small &middot; All 3 phases complete
     </footer>
     </body>
     </html>
