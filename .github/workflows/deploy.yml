@@ -37,6 +37,12 @@ jobs:
         kubectl apply -f k8s/network-policy.yaml
         kubectl rollout status deployment/hello-gke --timeout=120s
 
+    - name: Deploy Demo Site
+      run: |
+        kubectl apply -f k8s/demo-app.yaml
+        kubectl rollout restart deployment/demo-app
+        kubectl rollout status deployment/demo-app --timeout=120s
+
     - name: Deploy Grafana
       run: |
         kubectl apply -f k8s/grafana-sa.yaml
