@@ -41,6 +41,9 @@ jobs:
       run: |
         kubectl apply -f k8s/demo-app.yaml
 
+    # ⚠️ Prerequisite: Grafana Secret must be created manually before deploy:
+    #   kubectl create secret generic grafana-secret \
+    #     --from-literal=admin-password='STRONG_PASSWORD' --namespace=default
     - name: Deploy Grafana
       run: |
         kubectl apply -f k8s/grafana-sa.yaml

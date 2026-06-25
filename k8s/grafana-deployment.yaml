@@ -25,13 +25,18 @@ spec:
         - containerPort: 3000
         env:
         - name: GF_SECURITY_ADMIN_PASSWORD
-          value: "GkeDemo2024!"
+          valueFrom:
+            secretKeyRef:
+              name: grafana-secret
+              key: admin-password
         - name: GF_SERVER_ROOT_URL
           value: "https://gcp-gke.techcloudup.com/grafana"
         - name: GF_SERVER_SERVE_FROM_SUB_PATH
           value: "true"
         - name: GF_SECURITY_ALLOW_EMBEDDING
           value: "true"
+        # ⚠️ Anonymous auth allows unauthenticated dashboard access (read-only Viewer).
+        # This is intentional for the public demo — sensitive dashboards should disable this.
         - name: GF_AUTH_ANONYMOUS_ENABLED
           value: "true"
         - name: GF_AUTH_ANONYMOUS_ORG_ROLE

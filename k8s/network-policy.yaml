@@ -13,5 +13,24 @@ spec:
   ingress:
   - ports:
     - port: 8080
+      protocol: TCP
   egress:
-  - {}
+  # Allow DNS resolution via kube-dns
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  # Allow GCP metadata server (required for workload identity token refresh)
+  - to:
+    - ipBlock:
+        cidr: 169.254.169.254/32
+    ports:
+    - port: 80
+      protocol: TCP
+    - port: 988
+      protocol: TCP

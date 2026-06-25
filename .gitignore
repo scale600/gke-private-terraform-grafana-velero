@@ -6,4 +6,7 @@ terraform.tfvars
 *.tfstate
 *.tfstate.backup
 
+.DS_Store
+.playwright-mcp/
+
 gcp-gke-project-kor.md
