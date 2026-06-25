@@ -1,4 +1,4 @@
-# GKE Private Cluster — Cloud Engineering Project
+# GKE Private Cluster — Terraform IaC · Kubernetes (GKE) · GitHub Actions WIF · Grafana 11 · Velero v1.18 DR
 
 > **Production-grade Kubernetes on GCP** — Terraform IaC → GKE Private Cluster (VPC-native) → GitHub Actions CI/CD with Workload Identity Federation (zero SA keys) → Grafana observability on Cloud Monitoring → Velero disaster recovery → all on Spot e2-small under $14/month. [Live Demo](https://gcp-gke.techcloudup.com) · [Grafana Dashboard](https://gcp-gke.techcloudup.com/grafana)
 
