@@ -1,29 +1,29 @@
 # GKE Private Cluster Project
 
-A hands-on personal project implementing GKE operations, Terraform, CI/CD, observability, and automated disaster recovery — all from scratch. Designed to run on GCP free tier with minimal cost (< $12/month).
+A hands-on personal project implementing GKE operations, Terraform, CI/CD, observability, and automated disaster recovery — all from scratch. Heavily cost-optimized: Cloud NAT removed ($5/mo savings), Cloud Armor removed ($0.75/mo savings), LoadBalancer → ClusterIP ($1.80/mo savings). Runs at ~$6.50/month.
 
 | | Phase | Scope | Status |
 |---|---|---|---|
 | Phase 1 | Core Infrastructure | Terraform + GKE + CI/CD | ✅ Complete |
 | Phase 2 | Observability | Cloud Monitoring + Grafana Dashboard | ✅ Complete |
-| Phase 3 | DR & Backup | Velero + Enhanced DR Plan (RTO/RPO) | 🔵 In Progress |
+| Phase 3 | DR & Backup | Velero + Enhanced DR Plan (RTO/RPO) | ✅ Complete |
 
 ## Project Goal
 
-> "Provision a private GKE cluster with Terraform, deploy a sample app via CI/CD, monitor it with Grafana, and automate disaster recovery with Velero — all under $12/month."
+> "Provision a private GKE cluster with Terraform, deploy a sample app via CI/CD, monitor it with Grafana, and automate disaster recovery with Velero — all under $7/month."
 
 | Component | Implementation |
 |---|---|
-| GCP Services (GKE, VPC, IAM, Cloud Storage, Cloud Armor) | ✅ Phase 1 |
+| GCP Services (GKE, VPC, IAM, Cloud Storage, Artifact Registry) | ✅ Phase 1 |
 | Terraform (IaC) | ✅ Phase 1 |
 | CI/CD (GitHub Actions + WIF) | ✅ Phase 1 |
 | Kubernetes/GKE Operations | ✅ Phase 1 |
-| Security / Threat Intelligence | ✅ Phase 1 — Cloud Armor + Network Policy |
+| Security / Threat Intelligence | ✅ Phase 1 — Network Policy (Cloud Armor removed for cost) |
 | Cloud Monitoring + Alerting | ✅ Phase 2 |
 | Grafana Dashboard | ✅ Phase 2 |
 | Velero Automated Backup | ✅ Phase 3 |
 | Enhanced DR Plan (RTO < 15min / RPO < 1hr) | ✅ Phase 3 |
-| Cost Optimization | ✅ Spot instances, free tier maximized |
+| Cost Optimization | ✅ Cloud NAT removed, Cloud Armor removed, Spot instances, free tier maximized |
 
 ---
 
@@ -42,21 +42,22 @@ gcp-gke.techcloudup.com  →  A record (DNS only, Proxy OFF)
               │                  VPC                  │
               │  ┌─────────────────────────────────┐  │
               │  │          Private Subnet          │  │
-              │  │  [hello-gke app]    (Phase 1)   │  │
+              │  │  [demo-app (nginx)]  (Phase 1)  │  │
               │  │  [Grafana ClusterIP] (Phase 2)  │  │
               │  │  [Velero           ] (Phase 3)  │  │
               │  └──────────────┬──────────────────┘  │
               │                 │                      │
-              │            [Cloud NAT]                 │
+              │     [Private Google Access]            │
+              │     (images from Artifact Registry)    │
               └─────────────────┴──────────────────────┘
                                 │
           ┌─────────────────────┼──────────────────┐
           │                     │                  │
-┌─────────┴────────┐  ┌─────────┴────────┐  ┌─────┴────────────┐
-│   Cloud Armor    │  │ Cloud Monitoring  │  │   GCS Buckets    │
-│  (Threat Intel)  │  │  + Alert Policy   │  │  app + velero    │
-│   Phase 1        │  │  Phase 2          │  │  Phase 1 & 3     │
-└──────────────────┘  └───────────────────┘  └──────────────────┘
+  ┌───────┴────────┐  ┌─────────┴────────┐  ┌─────┴────────────┐
+  │Artifact Registry│  │ Cloud Monitoring  │  │   GCS Buckets    │
+  │(image mirror)  │  │  + Alert Policy   │  │  app + velero    │
+  │   Phase 1      │  │  Phase 2          │  │  Phase 1 & 3     │
+  └────────────────┘  └───────────────────┘  └──────────────────┘
 ```
 
 ---
@@ -94,25 +95,33 @@ gke-private-demo/
 ├── terraform/
 │   ├── providers.tf              # Provider versions + backend
 │   ├── variables.tf
+│   ├── terraform.tfvars          # Project-specific values
 │   ├── outputs.tf
-│   ├── vpc.tf
-│   ├── gke.tf
+│   ├── vpc.tf                    # VPC + Subnet (Cloud NAT removed — images via Artifact Registry)
+│   ├── gke.tf                    # GKE Private Cluster + Spot Node Pool
 │   ├── iam.tf                    # Node SA + GitHub Actions WIF
-│   ├── cloud-armor.tf
-│   ├── gcs.tf
+│   ├── artifact-registry.tf      # Docker image mirror (replaces Cloud NAT)
+│   ├── cloud-armor.tf            # Removed for cost (~$0.75/mo); restore from git if needed
+│   ├── gcs.tf                    # App backup bucket
 │   ├── static-ip.tf              # Phase 2: GCP global static IP for Ingress
-│   ├── monitoring.tf             # Phase 2: Cloud Monitoring + Alert Policy
+│   ├── monitoring.tf             # Phase 2: Cloud Monitoring Alert Policy
 │   └── velero-gcs.tf             # Phase 3: Velero backup bucket + SA
 ├── k8s/
-│   ├── deployment.yaml
-│   ├── service.yaml
+│   ├── demo-app.yaml             # Phase 2: nginx demo page (ConfigMap + Deployment + Service)
+│   ├── deployment.yaml           # Phase 1: hello-gke (scaled to 0 — deprecated)
+│   ├── service.yaml              # Phase 1: hello-gke ClusterIP (was LoadBalancer)
 │   ├── network-policy.yaml
-│   ├── managed-cert.yaml         # Phase 2: Google Managed SSL (gcp-gke.techcloudup.com)
-│   ├── ingress.yaml              # Phase 2: GKE Ingress → Grafana
-│   ├── grafana-deployment.yaml   # Phase 2: Grafana (ClusterIP)
-│   ├── grafana-configmap.yaml    # Phase 2: pre-built GKE dashboard JSON
+│   ├── grafana-sa.yaml           # Phase 2: KSA with WIF annotation
+│   ├── grafana-configmap.yaml    # Phase 2: datasource + dashboard JSON
+│   ├── grafana-backendconfig.yaml# Phase 2: health check on /api/health
+│   ├── grafana-deployment.yaml   # Phase 2: Grafana 11 (ClusterIP)
+│   ├── grafana-secret.yaml       # Phase 2: admin password (gitignored)
+│   ├── managed-cert.yaml         # Phase 2: Google Managed SSL
+│   ├── ingress.yaml              # Phase 2: GKE Ingress → demo-app + Grafana
 │   └── velero/                   # Phase 3
 │       └── schedule.yaml         # Velero daily backup schedule
+├── scripts/
+│   └── mirror-images.sh          # Mirror Docker images to Artifact Registry
 ├── .github/workflows/
 │   └── deploy.yml
 └── README.md
@@ -244,19 +253,9 @@ resource "google_compute_subnetwork" "main" {
   }
 }
 
-resource "google_compute_router" "nat_router" {
-  name    = "${var.cluster_name}-router"
-  region  = var.region
-  network = google_compute_network.main.id
-}
-
-resource "google_compute_router_nat" "main" {
-  name                               = "${var.cluster_name}-nat"
-  router                             = google_compute_router.nat_router.name
-  region                             = var.region
-  nat_ip_allocate_option             = "AUTO_ONLY"
-  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
-}
+# Cloud NAT + Cloud Router removed for cost optimization (~$5/month savings).
+# Container images are mirrored to Artifact Registry — pulled via Private Google Access (free).
+# GCP APIs (monitoring, logging, GCR) are also reached via Private Google Access.
 ```
 
 ### terraform/gke.tf
@@ -288,9 +287,9 @@ resource "google_container_cluster" "private" {
     workload_pool = "${var.project_id}.svc.id.goog"
   }
 
-  # Cost saving: demo only — use "logging.googleapis.com/kubernetes" in production
-  logging_service    = "none"
-  monitoring_service = "none"
+  # Phase 2: re-enabled for Cloud Monitoring (free tier 150MB/day)
+  logging_service    = "logging.googleapis.com/kubernetes"
+  monitoring_service = "monitoring.googleapis.com/kubernetes"
 
   deletion_protection = false   # Demo only — set to true in production
 }
@@ -301,14 +300,16 @@ resource "google_container_node_pool" "spot" {
   cluster  = google_container_cluster.private.name
 
   autoscaling {
-    min_node_count = 1   # Keep at least 1 node for demo availability
-    max_node_count = 2
+    min_node_count = 1
+    max_node_count = 1   # Single node — all workloads fit on e2-small (demo-app + Grafana)
   }
 
   node_config {
     # e2-micro (1GB RAM) is insufficient for kubelet + kube-proxy system overhead
     # e2-small (2GB RAM) is the practical minimum for running k8s workloads
     machine_type = "e2-small"
+    disk_size_gb = 20
+    disk_type    = "pd-standard"
     spot         = true   # ~60-80% cost reduction
 
     metadata = {
@@ -405,39 +406,11 @@ resource "google_project_iam_member" "github_gke_developer" {
 ### terraform/cloud-armor.tf
 
 ```hcl
-resource "google_compute_security_policy" "armor" {
-  name        = "${var.cluster_name}-threat-policy"
-  description = "Threat intelligence: block known malicious IPs"
-
-  # Block known malicious IPs
-  rule {
-    action   = "deny(403)"
-    priority = 1000
-    match {
-      versioned_expr = "SRC_IPS_V1"
-      config {
-        src_ip_ranges = ["103.21.244.0/22", "185.130.5.0/24"]
-      }
-    }
-    description = "Block known threat IPs"
-  }
-
-  # Default allow
-  rule {
-    action   = "allow"
-    priority = 2147483647
-    match {
-      versioned_expr = "SRC_IPS_V1"
-      config {
-        src_ip_ranges = ["*"]
-      }
-    }
-    description = "Default allow"
-  }
-}
+# Cloud Armor removed for cost optimization (~$0.75/month savings).
+# Restore this file from git history if threat protection / rate limiting is needed in production.
 ```
 
-> **Extension:** Adding `expr { expression = "evaluatePreconfiguredExpr('xss-stable')" }` to a rule enables WAF functionality (XSS/SQLi blocking).
+> **Note:** Cloud Armor was previously configured with threat intelligence rules (deny known malicious IPs) and pre-configured WAF expressions (XSS/SQLi blocking). The policy file has been archived — restore and re-apply `terraform plan` if production-grade L7 protection is needed.
 
 ### terraform/gcs.tf
 
@@ -482,7 +455,7 @@ metadata:
   name: hello-gke
   namespace: default
 spec:
-  replicas: 2
+  replicas: 0  # Scaled down: traffic now routed through GKE Ingress → demo-app
   selector:
     matchLabels:
       app: hello-gke
@@ -511,19 +484,23 @@ spec:
 ### k8s/service.yaml
 
 ```yaml
+# Phase 1 hello-gke service — deprecated; traffic now routed through GKE Ingress (demo-app)
+# Service type changed from LoadBalancer → ClusterIP to eliminate unnecessary LB cost (~$18/mo)
 apiVersion: v1
 kind: Service
 metadata:
   name: hello-gke-svc
   namespace: default
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: hello-gke
   ports:
   - port: 80
     targetPort: 8080
 ```
+
+> **Note:** The original LoadBalancer type service was deprecated in favor of GKE Ingress-based routing (single LB for all services). The `demo-app` (nginx) service also uses ClusterIP with BackendConfig health checks. External traffic now enters through a single GKE Ingress with path-based routing (`/` → demo-app, `/grafana` → Grafana).
 
 ### k8s/network-policy.yaml
 
@@ -693,22 +670,32 @@ gcloud compute security-policies describe gke-private-demo-threat-policy
 
 ## Cost Breakdown (Monthly, USD)
 
+### Current State (2026-07)
+
 | Item | Phase | Spec | Estimated Cost |
 |---|---|---|---|
 | GKE Control Plane | 1 | Zonal (1 zone) | **Free** |
-| Node (e2-small Spot) | 1 | 1-2 nodes, autoscaling | ~$6-10 |
-| Cloud NAT | 1 | 1 VM | ~$1 |
-| LoadBalancer Forwarding Rule | 1 | 1 rule | ~$1.8 |
-| Cloud Armor | 1 | 1 basic policy | $0.75 |
-| GCS Bucket (app backup) | 1 | < 1GB | ~$0 |
-| Cloud Monitoring | 2 | Free tier (150MB/day) | **Free** |
+| Node (e2-small Spot) | 1 | 1 node, max 1 (fixed) | ~$4.75 |
+| Boot Disk (pd-standard) | 1 | 20 GB | ~$0.80 |
+| GKE Ingress (GCLB) | 2 | L7 HTTP(S) LB | **Free** (free tier) |
+| Artifact Registry | 1 | Docker repo, < 0.5 GB | **Free** (free tier) |
+| GCS Bucket (app backup) | 1 | < 100 MB | ~$0.02 |
+| GCS Bucket (Velero) | 3 | < 500 MB, daily | ~$0.10 |
+| Cloud Monitoring | 2 | Free tier (150 MB/day) | **Free** |
 | GCP Static IP (Ingress) | 2 | 1 global IP (attached = free) | **Free** |
 | Google Managed SSL | 2 | `gcp-gke.techcloudup.com` | **Free** |
 | Grafana | 2 | Runs on existing node (ClusterIP) | **Free** |
-| GCS Bucket (Velero) | 3 | < 5GB | ~$0.5 |
-| **Total** | | | **~$10-14/month** |
+| **Total** | | | **~$5.67/month** |
 
-> Node cost varies: Grafana + Velero may trigger the 2nd Spot node (~$5-7 extra when active). Average monthly cost stays under $14.
+### Previously Removed (Cost Optimization)
+
+| Item | Phase | Reason | Savings |
+|---|---|---|---|
+| ~~Cloud NAT~~ | 1 | Images mirrored to Artifact Registry — pulled via Private Google Access (free) | ~$5/mo |
+| ~~Cloud Armor~~ | 1 | Demo environment — restore from git if threat protection needed | ~$0.75/mo |
+| ~~LoadBalancer Service~~ | 1 | Replaced with GKE Ingress (single GCLB, free tier) | ~$1.80/mo |
+
+> All workloads (demo-app nginx: 10m CPU/32Mi Mem + Grafana 11: 10m CPU/128Mi Mem + kube-system) fit comfortably on a single e2-small Spot node. The `hello-gke` deployment is scaled to 0 replicas and deprecated.
 
 ---
 
@@ -753,7 +740,7 @@ gcloud compute security-policies describe gke-private-demo-threat-policy
 - [x] `curl http://35.239.123.10` → `Hello, world! Version: 1.0.0` ✅
 - [x] Cloud Armor policy `gke-private-demo-threat-policy` — deny(403) priority 1000 ✅
 - [x] `kubectl describe networkpolicy hello-gke-netpol` — Ingress port 8080 active ✅
-- [ ] Blocked IP → 403 — ⚠️ Phase 2에서 진행 (Cloud Armor는 GKE Ingress에 연결 후 작동)
+- [ ] Blocked IP → 403 — ⚠️ Deferred to Phase 2 (Cloud Armor activates after GKE Ingress attachment)
 
 ---
 
@@ -812,4 +799,4 @@ gcloud compute security-policies describe gke-private-demo-threat-policy
 
 ## Project Overview
 
-*"I built a private GKE cluster across three phases. Phase 1 covers core infrastructure: Terraform IaC for VPC, Cloud NAT, IAM with least-privilege service accounts, Cloud Armor threat policy, and a GitHub Actions CI/CD pipeline using Workload Identity Federation — no long-lived SA keys. Phase 2 adds observability: Cloud Monitoring with alerting and a Grafana dashboard showing real-time node/pod metrics. Phase 3 completes the DR story: Velero automates daily k8s backups to GCS, and the DR runbook documents three recovery scenarios with measured RTO under 15 minutes and RPO under 1 hour. The entire stack runs on Spot e2-small nodes under $14/month."*
+*"I built a private GKE cluster across three phases. Phase 1 covers core infrastructure: Terraform IaC for VPC, IAM with least-privilege service accounts, and a GitHub Actions CI/CD pipeline using Workload Identity Federation — no long-lived SA keys. Container images are mirrored to Artifact Registry and pulled via Private Google Access, eliminating the need for Cloud NAT (~$5/mo saved). Phase 2 adds observability: Cloud Monitoring with alerting and a Grafana dashboard showing real-time node/pod metrics. Phase 3 completes the DR story: Velero automates daily k8s backups to GCS, and the DR runbook documents three recovery scenarios with measured RTO under 15 minutes and RPO under 1 hour. The entire stack runs on a single Spot e2-small node under $6/month."*
