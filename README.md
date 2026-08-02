@@ -1,6 +1,6 @@
 # GKE Private Cluster — Terraform IaC · Kubernetes (GKE) · GitHub Actions WIF · Grafana 11 · Velero v1.18 DR
 
-> **Production-grade Kubernetes on GCP** — Terraform IaC → GKE Private Cluster (VPC-native) → GitHub Actions CI/CD with Workload Identity Federation (zero SA keys) → Grafana observability on Cloud Monitoring → Velero disaster recovery → all on Spot e2-small under $14/month. [Live Demo](https://gcp-gke.techcloudup.com) · [Grafana Dashboard](https://gcp-gke.techcloudup.com/grafana)
+> **Production-grade Kubernetes on GCP** — Terraform IaC → GKE Private Cluster (VPC-native) → GitHub Actions CI/CD with Workload Identity Federation (zero SA keys) → Grafana observability on Cloud Monitoring → Velero disaster recovery → all on a single Spot e2-small under $6/month. [Live Demo](https://gcp-gke.techcloudup.com) · [Grafana Dashboard](https://gcp-gke.techcloudup.com/grafana)
 
 **Live:** [gcp-gke.techcloudup.com](https://gcp-gke.techcloudup.com) | **Dashboard:** [/grafana](https://gcp-gke.techcloudup.com/grafana)
 
@@ -14,6 +14,14 @@
 | Phase 2 | Observability — Cloud Monitoring + Grafana Dashboard | ✅ Complete |
 | Phase 3 | DR & Backup — Velero + DR Simulations (RTO/RPO) | ✅ Complete |
 
+## Screenshots
+
+| Desktop | Mobile |
+|---|---|
+| [![Homepage](screenshots/01-homepage.png)](screenshots/01-homepage.png) | [![Homepage Mobile](screenshots/03-homepage-mobile.png)](screenshots/03-homepage-mobile.png) |
+
+> **Desktop**: 1440px · **Mobile**: 375px (iPhone SE) — captured 2026-08-02
+
 ## Architecture
 
 ```
@@ -23,7 +31,7 @@
 [GCP Static IP: 8.232.180.134]
         |
         v
-[GKE Ingress + Cloud Armor + Google Managed SSL]
+[GKE Ingress + Google Managed SSL]
         |
         +-- /         -->  [Demo App (nginx)]
         +-- /grafana  -->  [Grafana 11 (ClusterIP)]
@@ -37,8 +45,8 @@
 [GKE Private Cluster  us-central1-f]
         |
         +-- VPC (10.0.0.0/24)
-              +-- Private Nodes (Spot e2-small, autoscale 1->2)
-              +-- Cloud NAT (egress)
+              +-- Private Nodes (Spot e2-small, 1 node)
+              +-- Artifact Registry (image mirror)
               +-- GCS Bucket  <-- Velero daily backup
 ```
 
@@ -61,26 +69,26 @@
 |---|---|---|---|
 | **Kubernetes** | **GKE Private Cluster** | Latest stable | Managed K8s control plane — zonal (`us-central1-f`) = free tier |
 | Cluster Networking | VPC-native (alias IP) | — | Pods: `10.20.0.0/20`, Services: `10.30.0.0/20` — no kube-proxy overlay |
-| Node Pool | **Spot e2-small** (2 vCPU / 2 GB) | — | `spot = true` (~60-80% cheaper), autoscale `1→2`, explicit pool mgmt |
-| Private Nodes | `enable_private_nodes = true` | — | No public IP on nodes — all egress through Cloud NAT |
+| Node Pool | **Spot e2-small** (2 vCPU / 2 GB) | — | `spot = true` (~60-80% cheaper), autoscale `min=1, max=1`, explicit pool mgmt |
+| Private Nodes | `enable_private_nodes = true` | — | No public IP on nodes — images pulled via Private Google Access from Artifact Registry |
 | Workload Identity | `workload_pool = "PROJECT_ID.svc.id.goog"` | — | KSA↔GSA binding — pods get GCP IAM without key files |
 | Node Security | `workload_metadata_config: GKE_METADATA` | — | Workload Identity enabled per-node; legacy endpoints disabled |
 | K8s Manifests | `k8s/` directory | — | Deployment, Service (LB + ClusterIP), NetworkPolicy, Ingress, ConfigMap, Secret, BackendConfig, ManagedCertificate, ServiceAccount |
 
-**Kubernetes resources deployed:** `Deployment` (hello-gke ×2 replicas, Grafana ×1, demo-app ×1), `Service` (LoadBalancer + 2× ClusterIP), `Ingress` (L7 routing: `/` → demo, `/grafana` → Grafana), `NetworkPolicy` (pod-level ingress/egress), `ConfigMap` (HTML, nginx.conf, Grafana datasource, dashboard JSON), `Secret` (grafana admin password), `BackendConfig` (health check), `ManagedCertificate` (Google SSL), `ServiceAccount` (grafana KSA with WIF annotation)
+**Kubernetes resources deployed:** `Deployment` (hello-gke ×0 replicas [deprecated], Grafana ×1, demo-app ×1), `Service` (3× ClusterIP), `Ingress` (L7 routing: `/` → demo, `/grafana` → Grafana), `NetworkPolicy` (pod-level ingress/egress), `ConfigMap` (HTML, nginx.conf, Grafana datasource, dashboard JSON), `Secret` (grafana admin password), `BackendConfig` (health check), `ManagedCertificate` (Google SSL), `ServiceAccount` (grafana KSA with WIF annotation)
 
 ### 🌐 Networking & Security
 
 | Component | Technology | Details |
 |---|---|---|
 | VPC | Custom VPC (`10.0.0.0/24`) | `auto_create_subnetworks = false`, `private_ip_google_access = true` |
-| Egress | Cloud NAT + Cloud Router | `AUTO_ONLY` NAT IPs, covers all subnet ranges |
-| L7 WAF | **Cloud Armor** | Threat intelligence policy — denies known malicious IPs (priority 1000), default-allow catch-all |
-| Ingress | GKE Ingress (L7 Global HTTP(S) LB) | Single anycast IP → path-based routing → Cloud Armor → SSL termination |
-| SSL/TLS | Google Managed Certificate | Auto-renewing, domain: `gcp-gke.techcloudup.com`, provisioning ~15-30 min |
-| Pod Isolation | **Kubernetes NetworkPolicy** | Default-deny posture — only port 8080 ingress, unrestricted egress per pod |
+| Egress | Private Google Access + Artifact Registry | Images mirrored to AR — pulled via PGA (free, no NAT needed) |
+| L7 WAF | ~~Cloud Armor~~ (removed for cost) | Previously: threat intelligence policy — restore from git if needed in production |
+| Ingress | GKE Ingress (L7 Global HTTP(S) LB) | Single anycast IP → path-based routing → SSL termination |
+| SSL/TLS | Google Managed Certificate | Auto-renewing, domain: `gcp-gke.techcloudup.com` |
+| Pod Isolation | **Kubernetes NetworkPolicy** | Default-deny posture — port 8080 ingress, DNS + GCP metadata egress |
 | IAM | Workload Identity Federation | GitHub Actions OIDC → GCP WIF pool → SA impersonation — **zero long-lived keys** |
-| Container Hardening | Pod Security Context | `runAsNonRoot: true`, `runAsUser: 1000`, `drop: [ALL]` capabilities, `readOnlyRootFilesystem` |
+| Container Hardening | Pod Security Context | `runAsNonRoot: true`, `runAsUser`, `drop: [ALL]` capabilities, `readOnlyRootFilesystem` |
 | Least Privilege | IAM Role Binding | Node SA: `logging.logWriter` + `monitoring.metricWriter` + `artifactregistry.reader` — minimal scope |
 
 ### 🚀 CI/CD Pipeline
@@ -139,13 +147,16 @@
 |---|---|---|
 | Spot VMs | `spot = true` on node pool | **~60-80%** vs on-demand e2-small |
 | Free Control Plane | Zonal cluster (single zone) | **$73.00/mo** saved (regional control plane cost) |
+| Cloud NAT Removed | Images mirrored to Artifact Registry → Private Google Access | **~$5.00/mo** saved |
+| Cloud Armor Removed | Demo environment — restore from git if needed | **~$0.75/mo** saved |
+| LoadBalancer → ClusterIP | Single GKE Ingress for all services (free tier) | **~$1.80/mo** saved (was separate LB service) |
 | Free Monitoring | Under 150 MB/day ingestion | **$0** — free tier covers demo workloads |
-| Right-Sized Resources | `50m-200m` CPU, `64-128 MiB` memory per pod | Minimal per-pod cost |
+| Right-Sized Resources | `10m-200m` CPU, `32-256 MiB` memory per pod | Minimal per-pod cost |
 | Auto-Delete | GCS 30-day lifecycle rule | No accumulation of stale backup objects |
-| Auto-Scaling | `min_node_count = 1`, `max_node_count = 2` | Idles at absolute minimum |
+| Single Node | `max_node_count = 1` — all workloads fit | No second node spin-up |
 | Free SSL | Google Managed Certificate | **$0** — included with GKE Ingress |
 | Free Static IP | Attached to forwarding rule | **$0** — charged only when unattached |
-| **Estimated Total** | | **~$10-14/month** |
+| **Estimated Total** | | **~$5.67/month** |
 
 ## Architecture & Technology Decisions
 
@@ -154,7 +165,7 @@
 ### Why Terraform (not Pulumi / CloudFormation / gcloud CLI)
 
 - **Declarative state management** — `terraform plan` shows exactly what will change before `apply`, critical for production confidence
-- **Provider ecosystem** — `hashicorp/google ~> 5.0` covers all GCP resources natively; no gaps for WIF, Cloud Armor, or GKE
+- **Provider ecosystem** — `hashicorp/google ~> 5.0` covers all GCP resources natively; no gaps for WIF, Artifact Registry, or GKE
 - **Module reusability** — VPC, GKE, IAM patterns are reproducible across projects with minimal variable changes
 - **Trade-off**: No native GCP construct library — all resources are raw HCL; acceptable for a personal project, but Pulumi with TypeScript may scale better for teams
 
@@ -169,7 +180,7 @@
 ### Why Private Cluster (not public nodes)
 
 - **Security posture**: Nodes have no public IP — unreachable from the internet. All kubelet, kube-proxy, and pod traffic stays within VPC
-- **Cloud NAT for egress**: Private nodes pull container images (`gcr.io`, `docker.io`) and reach GCP APIs (`monitoring.googleapis.com`) through a single NAT gateway
+- **Private Google Access for egress**: Container images are mirrored to Artifact Registry and pulled via Private Google Access (free) — no Cloud NAT needed. GCP APIs (`monitoring.googleapis.com`) are also reached through PGA.
 - **Authorized networks**: Cluster endpoint accessible from authorized IPs only (`enable_private_endpoint = false` for `kubectl` convenience in demo)
 - **Trade-off**: Debugging is harder — no direct SSH to nodes from the internet. Must use `kubectl exec` or GCP IAP tunneling in production
 
@@ -190,7 +201,7 @@
 
 - **Cost**: Grafana runs on the existing Spot node as ClusterIP — $0 additional infrastructure cost. Datadog would add $15+/host/month
 - **WIF native auth**: Grafana's Google Cloud Monitoring datasource uses the pod's Workload Identity with zero configuration — reads metrics from `kubernetes.io/*` namespace
-- **Sub-path routing**: Served under `/grafana` on the same Ingress as the demo page — single domain, single SSL cert, single Cloud Armor policy
+- **Sub-path routing**: Served under `/grafana` on the same Ingress as the demo page — single domain, single SSL cert
 - **Embeddable**: `allow_embedding = true` + `kiosk` mode lets the dashboard render in an iframe on the demo page
 - **Trade-off**: No alerting from Grafana itself — depends on Cloud Monitoring native alert policies
 
@@ -215,7 +226,7 @@
 | RTO — pod auto-recovery | < 10 seconds |
 | RTO — Velero restore | 4 seconds |
 | RPO | < 24 hours (daily backup) |
-| Cost optimization | Spot instances + GCP free tier (minimal cost) |
+| Cost optimization | Spot instances + GCP free tier + Cloud NAT/Cloud Armor removed (~$5.67/mo) |
 
 ## Repository Structure
 
@@ -223,27 +234,33 @@
 .
 ├── terraform/                  # IaC — all GCP resources
 │   ├── main.tf                 # Provider + backend
-│   ├── vpc.tf                  # VPC, subnets, Cloud NAT
+│   ├── vpc.tf                  # VPC, subnets (Cloud NAT removed — cost optimization)
 │   ├── gke.tf                  # Private GKE cluster + node pool
 │   ├── iam.tf                  # Service accounts + WIF pool/provider
-│   ├── security.tf             # Cloud Armor threat policy
+│   ├── artifact-registry.tf    # Docker image mirror (replaces Cloud NAT)
+│   ├── cloud-armor.tf          # Removed for cost — restore from git if needed
+│   ├── gcs.tf                  # App backup bucket
 │   ├── static-ip.tf            # Global static IP for Ingress
 │   ├── monitoring.tf           # Alert policy (node CPU > 80%)
 │   └── velero-gcs.tf           # Velero GCS bucket + SA
 │
 ├── k8s/                        # Kubernetes manifests
-│   ├── deployment.yaml         # hello-gke app (2 replicas)
-│   ├── service.yaml            # LoadBalancer service
+│   ├── demo-app.yaml           # nginx demo page (ConfigMap + Deployment + Service)
+│   ├── deployment.yaml         # hello-gke app (0 replicas — deprecated)
+│   ├── service.yaml            # ClusterIP (was LoadBalancer — cost optimized)
 │   ├── network-policy.yaml     # Pod ingress/egress rules
 │   ├── grafana-sa.yaml         # KSA with WIF annotation
 │   ├── grafana-configmap.yaml  # Datasource + dashboard JSON
 │   ├── grafana-backendconfig.yaml  # Health check on /api/health
 │   ├── grafana-deployment.yaml # Grafana 11 + Service
+│   ├── grafana-secret.yaml     # Admin password (gitignored)
 │   ├── managed-cert.yaml       # Google Managed SSL
 │   ├── ingress.yaml            # GKE Ingress (L7)
-│   ├── demo-app.yaml           # Project presentation page
 │   └── velero/
 │       └── schedule.yaml       # Daily backup schedule
+│
+├── scripts/
+│   └── mirror-images.sh        # Mirror Docker images to Artifact Registry
 │
 └── .github/workflows/
     └── deploy.yml              # CI/CD pipeline (WIF auth)
@@ -255,18 +272,18 @@
 
 - **VPC**: Custom VPC with secondary ranges for pods/services (VPC-native)
 - **GKE**: Private cluster (no public node IPs), zonal (us-central1-f), free control plane
-- **Node pool**: Spot e2-small, autoscale 1→2, `remove_default_node_pool=true`
-- **Cloud NAT**: Enables private nodes to pull images and reach GCP APIs
-- **Cloud Armor**: L7 threat intelligence policy attached to GKE Ingress
+- **Node pool**: Spot e2-small, fixed at 1 node, `remove_default_node_pool=true`
+- **Artifact Registry**: Container images mirrored to AR — pulled via Private Google Access (free, no NAT)
+- **Cloud Armor**: Removed for cost (~$0.75/mo) — restore from git if threat protection needed
 - **WIF**: GitHub Actions authenticates via OIDC — zero long-lived credentials
-- **Network Policy**: Restricts pod-to-pod traffic, egress to GCP metadata only
+- **Network Policy**: Restricts pod-to-pod traffic, egress to DNS + GCP metadata only
 
 ### Phase 2 — Observability
 
 - **Cloud Monitoring**: GKE system metrics auto-collected (`kubernetes.io/*`)
 - **Grafana 11**: Deployed as ClusterIP, uses GKE Workload Identity to query Cloud Monitoring
 - **KSA→GSA binding**: `grafana` KSA annotated with `gke-private-demo-grafana-sa` GSA
-- **Ingress**: GKE L7 Load Balancer with static IP + Google Managed SSL + Cloud Armor
+- **Ingress**: GKE L7 Load Balancer with static IP + Google Managed SSL
 - **BackendConfig**: Health check on `/api/health` (fixes 502 from Grafana's `/` redirect)
 - **Dashboard**: Node CPU/Memory utilization, Pod restart count, Running pods
 
@@ -319,4 +336,4 @@ Push to `main` branch triggers GitHub Actions:
 
 ---
 
-*GKE Private Cluster Project · us-central1-f · Spot e2-small · minimal cost*
+*GKE Private Cluster Project · us-central1-f · Spot e2-small · ~$5.67/month*
