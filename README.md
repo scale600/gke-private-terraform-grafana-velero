@@ -12,7 +12,7 @@
 |---|---|---|
 | Phase 1 | Core Infrastructure — Terraform + GKE + CI/CD | ✅ Complete |
 | Phase 2 | Observability — Cloud Monitoring + Grafana Dashboard | ✅ Complete |
-| Phase 3 | DR & Backup — Velero + DR Simulations (RTO/RPO) | ✅ Complete |
+| Phase 3 | DR & Backup — Velero + [Ansible Recovery Plan](docs/backup-dr-plan.md) (RTO/RPO) | ✅ Complete |
 
 ## Screenshots
 
