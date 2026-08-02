@@ -16,11 +16,7 @@
 
 ## Screenshots
 
-| Desktop | Mobile |
-|---|---|
-| [![Homepage](screenshots/01-homepage.png)](screenshots/01-homepage.png) | [![Homepage Mobile](screenshots/03-homepage-mobile.png)](screenshots/03-homepage-mobile.png) |
-
-> **Desktop**: 1440px · **Mobile**: 375px (iPhone SE) — captured 2026-08-02
+[![Homepage](screenshots/01-homepage.png)](screenshots/01-homepage.png)
 
 ## Architecture
 
