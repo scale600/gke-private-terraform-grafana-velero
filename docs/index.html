@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GCP GKE Cluster — Cloud Engineering Project</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: #0f172a; color: #e2e8f0; }
+  .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+  .tag { background: #1e3a5f; color: #93c5fd; border-radius: 6px; font-size: 0.75rem; padding: 2px 8px; }
+</style>
+</head>
+<body class="min-h-screen">
+  <nav class="border-b border-slate-700/50 px-6 py-4">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <span class="font-bold text-lg">GCP GKE Cluster</span>
+      <div class="flex items-center gap-4 text-sm text-slate-400">
+        <a href="https://linkedin.com/in/scale600" target="_blank" class="hover:text-white transition">LinkedIn</a>
+        <a href="https://github.com/scale600" target="_blank" class="hover:text-white transition">GitHub</a>
+        <a href="https://project.techcloudup.com" target="_blank" class="hover:text-white transition">Portfolio</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto px-6 py-12">
+    <!-- Hero -->
+    <div class="card p-8 mb-10">
+      <div class="flex flex-wrap gap-2 mb-4">
+        <span class="tag">Terraform IaC</span>
+        <span class="tag">GCP GKE Cluster</span>
+        <span class="tag">CI/CD + WIF</span>
+        <span class="tag">Grafana Observability</span>
+        <span class="tag">Velero DR</span>
+      </div>
+      <h1 class="text-3xl md:text-4xl font-bold mb-4">Kubernetes Cluster on <span class="gradient-text">Google Cloud</span></h1>
+      <p class="text-slate-400 leading-relaxed mb-6 max-w-2xl">
+        End-to-end cloud engineering portfolio: private GKE cluster provisioned with Terraform,
+        automated CI/CD via GitHub Actions + Workload Identity Federation, Grafana observability,
+        and Velero disaster recovery — all under minimal cost.
+      </p>
+      <div class="flex gap-3">
+        <span class="tag text-base px-3 py-1">Portfolio Snapshot</span>
+        <a href="https://github.com/scale600/gke-private-terraform-grafana-velero" target="_blank"
+           class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1 transition">
+          GitHub Repo →
+        </a>
+      </div>
+    </div>
+
+    <!-- Note about static mode -->
+    <div class="bg-amber-500/10 border border-amber-500/30 rounded-lg px-5 py-4 mb-10 text-sm text-amber-300">
+      Switched to static portfolio mode for cost optimization — GKE cluster and all billable GCP services have been decommissioned (~$44/month saved).
+    </div>
+
+    <!-- Project Phases -->
+    <h2 class="text-xl font-semibold mb-6">Project Phases</h2>
+    <div class="grid md:grid-cols-3 gap-5 mb-12">
+      <div class="card p-5">
+        <span class="tag mb-3 inline-block">Phase 1 Complete</span>
+        <h3 class="font-semibold mb-3">Core Infrastructure</h3>
+        <ul class="text-sm text-slate-400 space-y-1">
+          <li>+ VPC + Private Google Access</li>
+          <li>+ GCP GKE Cluster (Spot e2-small)</li>
+          <li>+ Terraform IaC (25 resources)</li>
+          <li>+ Artifact Registry (image mirror)</li>
+          <li>+ GitHub Actions + WIF (no SA keys)</li>
+        </ul>
+      </div>
+      <div class="card p-5">
+        <span class="tag mb-3 inline-block">Phase 2 Complete</span>
+        <h3 class="font-semibold mb-3">Observability</h3>
+        <ul class="text-sm text-slate-400 space-y-1">
+          <li>+ Cloud Monitoring metrics</li>
+          <li>+ Grafana 11 on GKE (WIF auth)</li>
+          <li>+ GKE Ingress + Google Managed SSL</li>
+          <li>+ Custom GKE dashboard (CPU/Mem/Pods)</li>
+          <li>+ gcp-gke.techcloudup.com</li>
+        </ul>
+      </div>
+      <div class="card p-5">
+        <span class="tag mb-3 inline-block">Phase 3 Complete</span>
+        <h3 class="font-semibold mb-3">DR &amp; Backup</h3>
+        <ul class="text-sm text-slate-400 space-y-1">
+          <li>+ Velero v1.18 + GCP plugin</li>
+          <li>+ Daily backup to GCS bucket</li>
+          <li>+ DR Sim 1: pod auto-recovery RTO &lt;10s</li>
+          <li>+ DR Sim 2: Velero restore RTO 4s</li>
+          <li>+ RPO &lt; 24h (daily schedule)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- GKE Cluster Overview -->
+    <h2 class="text-xl font-semibold mb-6">GKE Cluster Overview</h2>
+    <p class="text-slate-400 text-sm mb-6">Production-grade Kubernetes on GCP — now in static portfolio snapshot mode</p>
+    <div class="grid md:grid-cols-2 gap-5 mb-12">
+      <div class="card p-5">
+        <h3 class="font-semibold mb-3">Infrastructure</h3>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <div class="text-slate-500">Cluster</div><div>GKE Private (zonal)</div>
+          <div class="text-slate-500">Region</div><div>us-central1-f</div>
+          <div class="text-slate-500">Node Pool</div><div>e2-small Spot x1</div>
+          <div class="text-slate-500">Disk</div><div>20GB pd-standard</div>
+          <div class="text-slate-500">Networking</div><div>VPC-native + PGA</div>
+          <div class="text-slate-500">Images</div><div>Artifact Registry</div>
+          <div class="text-slate-500">SSL</div><div>Google Managed</div>
+        </div>
+      </div>
+      <div class="card p-5">
+        <h3 class="font-semibold mb-3">Stack</h3>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <div class="text-slate-500">IaC</div><div>Terraform ~&gt;5.0</div>
+          <div class="text-slate-500">CI/CD</div><div>GitHub Actions + WIF</div>
+          <div class="text-slate-500">Monitoring</div><div>Cloud Monitoring</div>
+          <div class="text-slate-500">Dashboard</div><div>Grafana 11 (ClusterIP)</div>
+          <div class="text-slate-500">Backup</div><div>Velero v1.18 → GCS</div>
+          <div class="text-slate-500">DNS</div><div>Cloudflare (DNS only)</div>
+          <div class="text-slate-500">Cost</div><div>~$6/month (decommissioned)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <h2 class="text-xl font-semibold mb-6">Key Metrics</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+      <div class="card p-5 text-center">
+        <div class="text-3xl font-bold gradient-text">25</div>
+        <div class="text-xs text-slate-500 mt-1">GCP Resources via Terraform</div>
+      </div>
+      <div class="card p-5 text-center">
+        <div class="text-3xl font-bold gradient-text">&lt;10s</div>
+        <div class="text-xs text-slate-500 mt-1">RTO Auto-Recovery</div>
+      </div>
+      <div class="card p-5 text-center">
+        <div class="text-3xl font-bold gradient-text">4s</div>
+        <div class="text-xs text-slate-500 mt-1">RTO Velero Restore</div>
+      </div>
+      <div class="card p-5 text-center">
+        <div class="text-3xl font-bold gradient-text">$0</div>
+        <div class="text-xs text-slate-500 mt-1">Current Monthly Cost</div>
+      </div>
+    </div>
+
+    <!-- Architecture -->
+    <h2 class="text-xl font-semibold mb-6">Architecture</h2>
+    <div class="card p-5 mb-12">
+      <pre class="text-xs md:text-sm text-slate-400 font-mono leading-relaxed whitespace-pre-wrap">
+[Cloudflare DNS] gcp-gke.techcloudup.com → GitHub Pages (static)
+
+Previously:
+[Cloudflare DNS] gcp-gke.techcloudup.com A record (Proxy OFF)
+        |
+        v
+[GCP Static IP: 8.232.180.134]
+        |
+        v
+[GKE Ingress + Google Managed SSL]
+        |
+        +-- /         →  [Demo App (nginx)]
+        +-- /grafana  →  [Grafana 11 ClusterIP]
+                                  |
+                           [Cloud Monitoring]
+                            GKE WIF → GSA
+
+[GitHub Actions] -- push to main
+        |  WIF (no long-lived SA keys)
+        v
+[GCP GKE Cluster us-central1-f]
+        |
+        +-- VPC (10.0.0.0/24)
+              +-- Private Nodes (Spot e2-small, 1 node)
+              +-- Artifact Registry (image mirror)
+              +-- GCS Bucket  ← Velero daily backup</pre>
+    </div>
+
+    <!-- Tech Stack -->
+    <h2 class="text-xl font-semibold mb-6">Tech Stack</h2>
+    <div class="grid md:grid-cols-3 gap-5 mb-12">
+      <div class="card p-5">
+        <div class="tag mb-3">Infrastructure</div>
+        <ul class="text-sm text-slate-400 space-y-1">
+          <li>Terraform ~&gt;5.0 (IaC)</li>
+          <li>GCP GKE Cluster (Zonal)</li>
+          <li>VPC-native networking</li>
+          <li>Artifact Registry (image mirror)</li>
+        </ul>
+      </div>
+      <div class="card p-5">
+        <div class="tag mb-3">CI/CD &amp; Security</div>
+        <ul class="text-sm text-slate-400 space-y-1">
+          <li>GitHub Actions</li>
+          <li>Workload Identity Federation</li>
+          <li>Kubernetes Network Policy</li>
+          <li>Google Managed SSL</li>
+        </ul>
+      </div>
+      <div class="card p-5">
+        <div class="tag mb-3">Observability &amp; DR</div>
+        <ul class="text-sm text-slate-400 space-y-1">
+          <li>Cloud Monitoring</li>
+          <li>Grafana 11.0</li>
+          <li>Velero v1.18 + GCS</li>
+          <li>Cloudflare DNS</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Source Code -->
+    <h2 class="text-xl font-semibold mb-4">Source Code</h2>
+    <p class="text-slate-400 text-sm mb-3">Terraform, Kubernetes manifests, GitHub Actions workflow</p>
+    <a href="https://github.com/scale600/gke-private-terraform-grafana-velero" target="_blank"
+       class="text-blue-400 hover:text-blue-300 text-sm transition">
+      scale600/gke-private-terraform-grafana-velero →
+    </a>
+  </main>
+
+  <footer class="border-t border-slate-700/50 text-center text-xs text-slate-600 py-6 mt-8">
+    GCP GKE Cluster Project · us-central1-f · Spot e2-small · All 3 phases complete · Now static snapshot
+  </footer>
+</body>
+</html>

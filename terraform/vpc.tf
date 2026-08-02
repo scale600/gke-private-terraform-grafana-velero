@@ -19,17 +19,6 @@ resource "google_compute_subnetwork" "main" {
     ip_cidr_range = "10.30.0.0/20"
   }
 }
-
-resource "google_compute_router" "nat_router" {
-  name    = "${var.cluster_name}-router"
-  region  = var.region
-  network = google_compute_network.main.id
-}
-
-resource "google_compute_router_nat" "main" {
-  name                               = "${var.cluster_name}-nat"
-  router                             = google_compute_router.nat_router.name
-  region                             = var.region
-  nat_ip_allocate_option             = "AUTO_ONLY"
-  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
-}
+# Cloud NAT + Cloud Router removed for cost optimization (~$5/month savings).
+# Container images are mirrored to Artifact Registry — pulled via Private Google Access (free).
+# GCP APIs (monitoring, logging, GCR) are also reached via Private Google Access.
