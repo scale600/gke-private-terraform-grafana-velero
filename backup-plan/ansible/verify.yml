@@ -1,0 +1,47 @@
+---
+# Post-Restore Verification
+
+- name: Check node status
+  command: kubectl get nodes
+  register: nodes
+  changed_when: false
+
+- name: Check pod status
+  command: kubectl get pods -A
+  register: pods
+  changed_when: false
+
+- name: Wait for demo-app deployment
+  command: kubectl rollout status deployment/demo-app -n default --timeout=120s
+  register: demo_rollout
+  failed_when: false
+
+- name: Wait for Grafana deployment
+  command: kubectl rollout status deployment/grafana -n default --timeout=120s
+  register: grafana_rollout
+  failed_when: false
+
+- name: Test demo page (HTTP 200)
+  uri:
+    url: "{{ demo_url }}"
+    return_content: yes
+  register: demo_response
+  failed_when: demo_response.status != 200
+
+- name: Test Grafana page (HTTP 200)
+  uri:
+    url: "{{ grafana_url }}"
+    return_content: yes
+  register: grafana_response
+  failed_when: grafana_response.status != 200
+
+- name: Print summary
+  debug:
+    msg:
+      - "========================================"
+      - " DR RESTORE SUMMARY"
+      - "========================================"
+      - "Nodes: {{ nodes.stdout_lines | length - 1 }} running"
+      - "Demo App: {{ 'OK' if demo_response.status == 200 else 'FAILED' }}"
+      - "Grafana: {{ 'OK' if grafana_response.status == 200 else 'FAILED' }}"
+      - "========================================"

@@ -1,0 +1,38 @@
+---
+# Pre-flight Health Check
+
+- name: Verify gcloud CLI is installed
+  command: gcloud version
+  register: gcloud_version
+  changed_when: false
+
+- name: Verify gcloud is authenticated
+  command: gcloud auth list --filter="status:ACTIVE" --format="value(account)"
+  register: gcloud_account
+  changed_when: false
+
+- name: Verify kubectl is installed
+  command: kubectl version --client --short
+  register: kubectl_version
+  changed_when: false
+  ignore_errors: yes
+
+- name: Verify velero CLI is installed
+  command: velero version --client-only
+  register: velero_version
+  changed_when: false
+  ignore_errors: yes
+
+- name: Verify terraform is installed
+  command: terraform version
+  register: terraform_version
+  changed_when: false
+
+- name: Print tool versions
+  debug:
+    msg:
+      - "gcloud: {{ gcloud_version.stdout }}"
+      - "Account: {{ gcloud_account.stdout }}"
+      - "kubectl: {{ kubectl_version.stdout | default('NOT INSTALLED') }}"
+      - "velero: {{ velero_version.stdout | default('NOT INSTALLED') }}"
+      - "terraform: {{ terraform_version.stdout | default('NOT INSTALLED') }}"

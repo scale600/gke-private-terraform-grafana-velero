@@ -1,0 +1,33 @@
+---
+# Terraform Infrastructure Restore
+
+- name: Check if Terraform state exists in GCS
+  command: gsutil ls gs://{{ gcs_state_bucket }}/gke-private-demo/
+  register: state_check
+  changed_when: false
+  failed_when: false
+
+- name: Pull Terraform state from GCS
+  command:
+    cmd: gsutil cp gs://{{ gcs_state_bucket }}/gke-private-demo/default.tfstate ../terraform/terraform.tfstate
+  when: state_check.rc == 0
+
+- name: Initialize Terraform with GCS backend
+  command: terraform init
+  args:
+    chdir: ../terraform
+  register: tf_init
+
+- name: Plan Terraform
+  command: terraform plan -var="project_id={{ gcp_project_id }}" -var="github_repo=scale600/gke-private-terraform-grafana-velero"
+  args:
+    chdir: ../terraform
+  register: tf_plan
+  changed_when: false
+
+- name: Apply Terraform (recreate infrastructure)
+  command: terraform apply -auto-approve -var="project_id={{ gcp_project_id }}" -var="github_repo=scale600/gke-private-terraform-grafana-velero"
+  args:
+    chdir: ../terraform
+  register: tf_apply
+  when: tf_plan.stdout is search('Plan: [1-9]')

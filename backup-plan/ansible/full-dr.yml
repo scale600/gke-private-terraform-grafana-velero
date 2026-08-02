@@ -1,0 +1,26 @@
+---
+# Master Disaster Recovery Playbook
+# Usage: ansible-playbook -i inventory/hosts.yml playbooks/full-dr.yml
+
+- name: Full Disaster Recovery — GKE Private Demo
+  hosts: localhost
+  gather_facts: yes
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: "[1/5] Pre-flight — check GCP auth and tools"
+      include_tasks: pre-check.yml
+
+    - name: "[2/5] Layer 0 — Terraform state check & infra restore"
+      include_tasks: terraform-restore.yml
+
+    - name: "[3/5] Layer 1 — K8s restore via Velero"
+      include_tasks: velero-restore.yml
+
+    - name: "[4/5] Layer 3 — DNS failover (if needed)"
+      include_tasks: dns-failover.yml
+      when: dns_failover_needed | default(false)
+
+    - name: "[5/5] Verification — health checks"
+      include_tasks: verify.yml

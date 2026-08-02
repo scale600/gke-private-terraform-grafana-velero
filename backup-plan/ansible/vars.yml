@@ -1,0 +1,21 @@
+---
+# Configuration Variables for DR Recovery
+
+gcp_project_id: "gke-private-demo-202606"
+gcp_zone: "us-central1-f"
+gcp_region: "us-central1"
+gke_cluster_name: "gke-private-demo"
+
+# Backup
+velero_namespace: "velero"
+gcs_state_bucket: "tf-state-gke-private-demo-202606"
+
+# DNS
+cloudflare_zone: "techcloudup.com"
+cloudflare_record: "gcp-gke"
+ingress_ip: "8.232.180.134"
+
+# Verification
+demo_url: "https://gcp-gke.techcloudup.com"
+grafana_url: "https://gcp-gke.techcloudup.com/grafana"
+health_timeout_seconds: 120

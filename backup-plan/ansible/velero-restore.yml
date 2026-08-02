@@ -1,0 +1,36 @@
+---
+# Velero Kubernetes Restore
+
+- name: Get GKE credentials
+  command:
+    cmd: >
+      gcloud container clusters get-credentials {{ gke_cluster_name }}
+      --zone {{ gcp_zone }}
+      --project {{ gcp_project_id }}
+
+- name: Wait for Velero pod to be ready
+  command: kubectl wait --for=condition=Ready pod -l component=velero -n {{ velero_namespace }} --timeout=300s
+  register: velero_ready
+  failed_when: false
+
+- name: List available Velero backups
+  command: velero backup get
+  register: backup_list
+
+- name: Show available backups
+  debug:
+    msg: "{{ backup_list.stdout_lines }}"
+
+- name: Find latest completed backup
+  shell: |
+    velero backup get --output json | \
+    jq -r '.items | map(select(.status.phase == "Completed")) | sort_by(.status.completionTimestamp) | last | .metadata.name'
+  register: latest_backup
+
+- name: Restore from Velero backup
+  command: velero restore create --from-backup {{ latest_backup.stdout }} --wait
+  when: latest_backup.stdout != "null" and latest_backup.stdout != ""
+
+- name: Check restore status
+  command: velero restore get
+  register: restore_status

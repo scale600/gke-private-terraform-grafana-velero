@@ -1,0 +1,53 @@
+# GitHub Actions — Scheduled Backup Workflow
+
+> **Status**: Proposed (not implemented before decommission)
+
+## `backup-state.yml`
+
+```yaml
+name: Backup Terraform State & K8s Config
+
+on:
+  schedule:
+    - cron: '0 1 * * *'   # Daily at 01:00 UTC
+  workflow_dispatch:        # Manual trigger
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Auth to GCP
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+        service_account: ${{ vars.DEPLOY_SA }}
+
+    - uses: google-github-actions/setup-gcloud@v2
+
+    - name: Backup Terraform state snapshot
+      run: |
+        gcloud storage cp \
+          gs://tf-state-gke-private-demo-202606/gke-private-demo/default.tfstate \
+          gs://tf-state-gke-private-demo-202606/gke-private-demo/backups/tfstate-$(date +%Y%m%d-%H%M%S)
+
+    - name: Trigger Velero backup
+      run: |
+        gcloud container clusters get-credentials ${{ vars.GKE_CLUSTER }} \
+          --zone ${{ vars.GKE_ZONE }} --project ${{ vars.PROJECT_ID }}
+        velero backup create manual-$(date +%Y%m%d-%H%M%S) --wait
+
+    - name: Export K8s resource manifest backup
+      run: |
+        gcloud container clusters get-credentials ${{ vars.GKE_CLUSTER }} \
+          --zone ${{ vars.GKE_ZONE }} --project ${{ vars.PROJECT_ID }}
+        kubectl get all,ingress,configmap,secret,networkpolicy,managedcertificate,backendconfig \
+          -n default -o yaml > k8s-snapshot.yaml
+        gcloud storage cp k8s-snapshot.yaml \
+          gs://gke-private-demo-backup-*/$(date +%Y%m%d)/
+```
